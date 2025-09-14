@@ -17,14 +17,14 @@ function App() {
         </a>
         , open-sourced on{" "}
         <a
-          href="https://github.com/SunitaMousavi/react-weather"
+          href="https://github.com/SunitaMousavi/react-dictionary-app"
           target="_blank"
           rel="noopener noreferrer">
           GitHub
         </a>{" "}
         and hosted on{" "}
         <a
-          href="https://reactweatherapp-sunitamousavi.netlify.app"
+          href="https://reactdictionaryapp-sunitamousavi.netlify.app"
           target="_blank"
           rel="noopener noreferrer">
           Netlify
