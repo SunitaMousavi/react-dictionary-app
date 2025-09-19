@@ -16,7 +16,15 @@ export default function Dictionary() {
 
     // documentation: https://dictionaryapi.dev/
     let apiUrl = `https://api.dictionaryapi.dev/api/v2/entries/en/${keyword}`;
-    axios.get(apiUrl).then(handleResponse);
+    axios
+      .get(apiUrl)
+      .then(handleResponse)
+      .catch((error) => {
+        setResults(null);
+        alert(
+          "Sorry, we couldn't find the word you were looking for. Please try again."
+        );
+      });
   }
 
   function handleKeywordChange(event) {
