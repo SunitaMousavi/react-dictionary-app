@@ -2,49 +2,57 @@ import React from "react";
 
 export default function SavedWords({
   savedWords,
-  onExportFull,
-  onExportAnki,
+  onExport,
   onRemove,
   onClear,
 }) {
   return (
     <div className="SavedWords">
+      {/* Heading with number of saved words */}
       <h2>Saved Words ({savedWords.length})</h2>
 
+      {/* If no words are saved, show a placeholder message */}
       {savedWords.length === 0 ? (
         <p>No saved words yet — click “Save word” to add one.</p>
       ) : (
         <>
+          {/* Export and Clear All buttons */}
           <div>
-            <button onClick={onExportFull}>Export CSV</button>
-            <button onClick={onExportAnki}>Export Anki</button>
-            <button onClick={onClear}>Clear all</button>
+            <button onClick={onExport}>Export Flashcards</button>
+            <button onClick={onClear}>Clear All</button>
           </div>
 
+          {/* Word list */}
           <ul>
-            {savedWords.map((w) => (
-              <li key={w.word}>
-                <div>
-                  <strong>{w.word}</strong>
+            {savedWords
+              .filter((w) => w && w.word) // ✅ remove null/invalid entries
+              .map((w) => (
+                <li key={w.word}>
                   <div>
-                    {w.definition && <span>{w.definition}</span>}
-                    {w.example && <div>&ldquo;{w.example}&rdquo;</div>}
-                    {w.synonyms && w.synonyms.length > 0 && (
-                      <div>
-                        <strong>Syn:</strong> {w.synonyms.join(", ")}
-                      </div>
+                    <strong>{w.word}</strong>
+
+                    {/* Only show phonetics if available */}
+                    {w.phonetics && w.phonetics.length > 0 && (
+                      <span style={{ marginLeft: "0.5rem", color: "#555" }}>
+                        [{w.phonetics[0].text || ""}]
+                      </span>
+                    )}
+
+                    {/* Meanings */}
+                    {w.meanings && w.meanings.length > 0 && (
+                      <p style={{ margin: "0.25rem 0" }}>
+                        {w.meanings[0].partOfSpeech}:{" "}
+                        {w.meanings[0].definitions[0].definition}
+                      </p>
                     )}
                   </div>
-                </div>
-                <div>
-                  <button
-                    onClick={() => onRemove(w.word)}
-                    aria-label={`Remove ${w.word}`}>
-                    Remove
-                  </button>
-                </div>
-              </li>
-            ))}
+
+                  {/* Remove button */}
+                  <div style={{ marginTop: "0.25rem" }}>
+                    <button onClick={() => onRemove(w.word)}>Remove</button>
+                  </div>
+                </li>
+              ))}
           </ul>
         </>
       )}

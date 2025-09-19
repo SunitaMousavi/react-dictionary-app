@@ -5,10 +5,10 @@ import SavedWords from "./SavedWords";
 import "./Dictionary.css";
 
 export default function Dictionary() {
-  const [keyword, setKeyword] = useState("");
-  const [results, setResults] = useState(null);
-  const [savedWords, setSavedWords] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [keyword, setKeyword] = useState(""); // The word typed by the user.
+  const [results, setResults] = useState(null); // Stores the API response for the searched word.
+  const [savedWords, setSavedWords] = useState([]); // List of words saved by the user (persists with localStorage).
+  const [loading, setLoading] = useState(false); // Tracks whether a search is in progress.
 
   // load saved words from localStorage on mount
   useEffect(() => {
@@ -16,14 +16,10 @@ export default function Dictionary() {
     setSavedWords(saved);
   }, []);
 
-  function handleResponse(response) {
-    setResults(response.data[0]);
-  }
-
+  // Search & API Handling
   function Search(event) {
     event.preventDefault();
     setLoading(true);
-
     // documentation: https://dictionaryapi.dev/
     let apiUrl = `https://api.dictionaryapi.dev/api/v2/entries/en/${keyword}`;
     axios
@@ -32,7 +28,7 @@ export default function Dictionary() {
         handleResponse(response);
         setLoading(false);
       })
-      .catch((error) => {
+      .catch(() => {
         setResults(null);
         setLoading(false);
         alert(
@@ -41,38 +37,46 @@ export default function Dictionary() {
       });
   }
 
+  function handleResponse(response) {
+    setResults(response.data[0]);
+  }
+
+  // Updates keyword as the user types.
   function handleKeywordChange(event) {
     setKeyword(event.target.value);
   }
 
-  function saveWord(wordObj) {
-    if (!wordObj || !wordObj.word) return;
+  // Save the **full results object**
+  function saveWord(results) {
+    if (!results || !results.word) return;
 
     setSavedWords((prev) => {
       const duplicate = prev.some(
-        (w) => w.word.trim().toLowerCase() === wordObj.word.trim().toLowerCase()
+        (w) => w.word.trim().toLowerCase() === results.word.trim().toLowerCase()
       );
       if (duplicate) {
-        alert(`The word "${wordObj.word}" is already saved.`);
+        alert(`The word "${results.word}" is already saved.`);
         return prev;
       }
-      const next = [...prev, wordObj];
+      const next = [...prev, results];
       localStorage.setItem("savedWords", JSON.stringify(next));
       return next;
     });
   }
 
+  // Clear all saved words
   function clearSavedWords() {
     if (!window.confirm("Are you sure you want to clear all saved words?"))
       return;
     localStorage.removeItem("savedWords");
     setSavedWords([]);
   }
+
+  // Export to CSV (for flashcards like Anki)
   function exportCSV(data, filename) {
     const csvContent =
       "data:text/csv;charset=utf-8," +
       data.map((row) => row.map((cell) => `"${cell}"`).join(",")).join("\n");
-
     const blob = new Blob([decodeURIComponent(encodeURI(csvContent))], {
       type: "text/csv;charset=utf-8;",
     });
@@ -83,26 +87,28 @@ export default function Dictionary() {
     link.click();
   }
 
-  function handleExportFull() {
-    const rows = [["Word", "Definition", "Example", "Synonyms"]];
-    savedWords.forEach((w) => {
-      rows.push([
-        w.word,
-        w.definition || "",
-        w.example || "",
-        w.synonyms ? w.synonyms.join("; ") : "",
-      ]);
-    });
-    exportCSV(rows, "saved_words.csv");
-  }
-
-  function handleExportAnki() {
+  // Build flashcard content from saved words
+  function handleExportFlashcards() {
     const rows = [["Front", "Back"]];
+
     savedWords.forEach((w) => {
-      const back = `${w.definition || ""}${w.example ? " — " + w.example : ""}`;
+      let back = "";
+
+      w.meaning?.forEach((meaning) => {
+        meaning.definitions?.forEach((def) => {
+          back += `<b>${meaning.partOfSpeech}</b> - ${def.definition}`;
+          if (def.example) back += `<br><i>Example:</i> ${def.example}`;
+          if (def.synonyms?.length)
+            back += `<br><i>Synonyms:</i> ${def.synonyms.join(", ")}`;
+          back += "<br>";
+        });
+      });
+      w.phonetics?.forEach((p) => {
+        if (p.audio) back += `<br><audio controls src="${p.audio}"></audio>`;
+      });
       rows.push([w.word, back]);
     });
-    exportCSV(rows, "anki_words.csv");
+    exportCSV(rows, "flashcards.csv");
   }
 
   return (
@@ -111,16 +117,19 @@ export default function Dictionary() {
         <input
           type="search"
           placeholder="Type a word..."
-          autoFocus="on"
+          autoFocus={true}
           onChange={handleKeywordChange}
         />
         <input type="submit" value="Search" />
       </form>
+
       {loading && <p>Loading...</p>}
+
+      <Results results={results} onSave={saveWord} />
+
       <SavedWords
         savedWords={savedWords}
-        onExportFull={handleExportFull}
-        onExportAnki={handleExportAnki}
+        onExport={handleExportFlashcards} // only one export
         onRemove={(word) =>
           setSavedWords((prev) => {
             const next = prev.filter((w) => w.word !== word);
@@ -130,7 +139,6 @@ export default function Dictionary() {
         }
         onClear={clearSavedWords}
       />
-      <Results results={results} onSave={saveWord} />{" "}
     </div>
   );
 }
