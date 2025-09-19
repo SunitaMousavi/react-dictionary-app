@@ -1,3 +1,19 @@
 .Dictionary {
  background-color: aquamarine;
 }
+
+.Synonyms ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  list-style: none;
+  padding: 0;
+}
+
+.Synonyms .synonym {
+  background: #eee;
+  border-radius: 12px;
+  padding: 4px 10px;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
