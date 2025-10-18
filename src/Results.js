@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-
 // FontAwesome Icons
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faBookmark as solidBookmark } from "@fortawesome/free-solid-svg-icons";
@@ -31,19 +30,36 @@ export default function Results({ results, onSave, savedWords }) {
         phonetic: results.phonetic || "",
         meanings: results.meanings.map((meaning) => ({
           partOfSpeech: meaning.partOfSpeech,
-          definition: meaning.definition,
-          example: meaning.example || "",
+          definitions: [
+            {
+              definition: meaning.definition,
+              example: meaning.example || "",
+            },
+          ],
           synonyms: meaning.synonyms || [],
           antonyms: meaning.antonyms || [],
+          morphology: meaning.morphology || "",
         })),
       });
       setIsSaved(true);
     }
   };
 
-  // Handle audio (SheCodes API may not always include one)
-  const playAudio = (url) => {
-    if (url) new Audio(url).play();
+  const playAudio = () => {
+    if ("speechSynthesis" in window) {
+      // Cancel any ongoing speech
+      window.speechSynthesis.cancel();
+
+      const utterance = new SpeechSynthesisUtterance(results.word);
+      utterance.lang = "en-US";
+      utterance.rate = 0.85; // Slightly slower for clarity
+      utterance.pitch = 1.0;
+      utterance.volume = 1.0;
+
+      window.speechSynthesis.speak(utterance);
+    } else {
+      alert("Text-to-speech not supported in your browser");
+    }
   };
 
   // Render
@@ -62,12 +78,20 @@ export default function Results({ results, onSave, savedWords }) {
           />
         </button>
 
-        {/* Word + Phonetic */}
+        {/* Word + Phonetic + Audio */}
         <div className="word-info">
           <h2 className="word">{results.word}</h2>
           {results.phonetic && (
             <span className="phonetic-text">/{results.phonetic}/</span>
           )}
+          {/* AUDIO BUTTON */}
+          <button
+            onClick={playAudio}
+            aria-label="Pronounce word"
+            className="audio-btn"
+            style={{ marginLeft: "10px", cursor: "pointer" }}>
+            <FontAwesomeIcon icon={faVolumeHigh} />
+          </button>
         </div>
       </div>
 

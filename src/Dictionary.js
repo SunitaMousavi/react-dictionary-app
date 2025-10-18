@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react"; // Add useEffect
 import axios from "axios";
 
 // FontAwesome Icons
@@ -13,11 +13,20 @@ import Results from "./Results";
 import SavedWords from "./SavedWords";
 
 export default function Dictionary() {
-  // STATE
+  // STATE - Load savedWords from localStorage on mount
   const [keyword, setKeyword] = useState("");
   const [results, setResults] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [savedWords, setSavedWords] = useState([]);
+  const [savedWords, setSavedWords] = useState(() => {
+    // Load from localStorage when component mounts
+    const saved = localStorage.getItem("savedWords");
+    return saved ? JSON.parse(saved) : [];
+  });
+
+  // Save to localStorage whenever savedWords changes
+  useEffect(() => {
+    localStorage.setItem("savedWords", JSON.stringify(savedWords));
+  }, [savedWords]);
 
   // Update input field
   function handleKeywordChange(event) {
@@ -35,7 +44,8 @@ export default function Dictionary() {
       const response = await axios.get(
         `https://api.shecodes.io/dictionary/v1/define?word=${keyword}&key=${apiKey}`
       );
-      setResults(response.data[0]);
+
+      setResults(response.data);
     } catch (error) {
       setResults(null);
       alert(
@@ -46,7 +56,7 @@ export default function Dictionary() {
     }
   }
 
-  // Save, Remove, Clear, Export handlers (same as before)
+  // Save, Remove, Clear, Export handlers
   function handleSave(wordData) {
     if (wordData.remove) {
       setSavedWords(savedWords.filter((item) => item.word !== wordData.word));
