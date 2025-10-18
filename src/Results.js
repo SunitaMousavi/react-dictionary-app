@@ -18,13 +18,7 @@ export default function Results({ results, onSave, savedWords }) {
     }
   }, [results, savedWords]);
 
-  // Return null if no results
   if (!results) return null;
-
-  // Handlers
-  const playAudio = (url) => {
-    if (url) new Audio(url).play();
-  };
 
   // Toggle save/unsave
   const toggleSave = () => {
@@ -34,20 +28,22 @@ export default function Results({ results, onSave, savedWords }) {
     } else {
       onSave({
         word: results.word,
-        phonetic: results.phonetics?.[0]?.text || "",
-        audio: results.phonetics?.[0]?.audio || "",
+        phonetic: results.phonetic || "",
         meanings: results.meanings.map((meaning) => ({
           partOfSpeech: meaning.partOfSpeech,
-          definitions: meaning.definitions.slice(0, 2).map((d) => ({
-            definition: d.definition,
-            example: d.example || "",
-          })),
+          definition: meaning.definition,
+          example: meaning.example || "",
           synonyms: meaning.synonyms || [],
           antonyms: meaning.antonyms || [],
         })),
       });
       setIsSaved(true);
     }
+  };
+
+  // Handle audio (SheCodes API may not always include one)
+  const playAudio = (url) => {
+    if (url) new Audio(url).play();
   };
 
   // Render
@@ -66,39 +62,25 @@ export default function Results({ results, onSave, savedWords }) {
           />
         </button>
 
-        {/* Word + Phonetics */}
+        {/* Word + Phonetic */}
         <div className="word-info">
           <h2 className="word">{results.word}</h2>
-          <div className="phonetics">
-            {results.phonetics?.map((p, i) => (
-              <div key={i} className="phonetic-item">
-                {p.text && <span className="phonetic-text">{p.text}</span>}
-                {p.audio && (
-                  <button
-                    onClick={() => playAudio(p.audio)}
-                    aria-label={`Play pronunciation for ${results.word}`}
-                    className="audio-btn">
-                    <FontAwesomeIcon icon={faVolumeHigh} size="lg" />
-                  </button>
-                )}
-              </div>
-            ))}
-          </div>
+          {results.phonetic && (
+            <span className="phonetic-text">/{results.phonetic}/</span>
+          )}
         </div>
       </div>
 
-      {/* Meanings Card */}
+      {/* Meanings */}
       <div className="card meanings-card">
         {results.meanings?.map((meaning, index) => (
           <div key={index} className="meaning">
             <h4 className="part-of-speech">{meaning.partOfSpeech}</h4>
             <ul className="definitions">
-              {meaning.definitions.map((def, i) => (
-                <li key={i} className="definition">
-                  <span>{def.definition}</span>
-                  {def.example && <em className="example"> — {def.example}</em>}
-                </li>
-              ))}
+              <li className="definition">
+                <span>{meaning.definition}</span>
+                {meaning.example && <em> — {meaning.example}</em>}
+              </li>
             </ul>
 
             {meaning.synonyms?.length > 0 && (

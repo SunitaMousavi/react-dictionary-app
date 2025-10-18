@@ -31,8 +31,9 @@ export default function Dictionary() {
     setLoading(true);
 
     try {
+      const apiKey = `f9006f5eft0a33fd9693b7da488a8o99`;
       const response = await axios.get(
-        `https://api.dictionaryapi.dev/api/v2/entries/en/${keyword}`
+        `https://api.shecodes.io/dictionary/v1/define?word=${keyword}&key=${apiKey}`
       );
       setResults(response.data[0]);
     } catch (error) {
